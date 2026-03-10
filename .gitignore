@@ -1,0 +1,13 @@
+# IDEA 等编辑器配置
+.idea/
+*.iml
+.vscode/
+
+# 编译和依赖文件
+target/
+node_modules/
+*.class
+
+# 日志和本地上传文件
+*.log
+uploads/
