@@ -42,6 +42,9 @@ public class ChatController {
     @MessageMapping("/send/{orderId}")
     public void sendMessage(@DestinationVariable Long orderId, ChatMessageDTO msgDTO) {
         ChatMessage message = new ChatMessage();
+
+
+
         message.setOrderId(orderId);
         message.setSenderId(msgDTO.getSenderId());
         message.setReceiverId(msgDTO.getReceiverId());

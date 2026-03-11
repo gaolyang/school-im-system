@@ -38,4 +38,9 @@ public class ChatMessage {
     private Integer isRead; // 0-未读，1-已读
 
     private LocalDateTime createTime; // 创建时间
+
+
+    public void setOrderId(Long orderId){
+        this.orderId = orderId;
+    }
 }
