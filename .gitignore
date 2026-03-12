@@ -1,13 +1,27 @@
-# IDEA 等编辑器配置
+# --- Java / Maven ---
+target/
+.mvn/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+*.tmp
+*.bak
+*.swp
+
+# --- IDEA 特有配置 ---
 .idea/
 *.iml
-.vscode/
+*.iws
+*.ipr
+*.iws
 
-# 编译和依赖文件
-target/
+# --- Vue / Node.js (你的项目里有dist和node_modules) ---
 node_modules/
-*.class
-
-# 日志和本地上传文件
+dist/
+.output/
+.nuxt/
+.vercel/
+.DS_Store
 *.log
-uploads/

@@ -1,17 +1,10 @@
 package org.zzu.schoolimsystem.controller;
 
-/**
- * ClassName: VerificationController
- * Package: org.zzu.schoolimsystem.controller
- * Description:
- *
- * @Author gly
- * @Create 2026/3/10 19:44
- * @Version 1.0
- */
-
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.zzu.schoolimsystem.dto.VerifyRequest;
 import org.zzu.schoolimsystem.dto.VerifyResponse;
 import org.zzu.schoolimsystem.service.ZjfVarificationCodeService;
@@ -28,8 +21,7 @@ public class VerificationController {
 
     @PostMapping("/verify")
     public ResponseEntity<VerifyResponse> verify(@RequestBody VerifyRequest request) {
-        Integer result = verificationService.verifyCode(request.getEventnumber(), request.getCode());
+        Integer result = verificationService.verifyCode(request.getOrderId(), request.getCode());
         return ResponseEntity.ok(new VerifyResponse(result));
     }
-
 }

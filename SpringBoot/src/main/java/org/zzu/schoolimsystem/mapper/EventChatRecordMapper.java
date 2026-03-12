@@ -13,9 +13,8 @@ package org.zzu.schoolimsystem.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
-import org.zzu.schoolimsystem.entity.ChatMessage;
+import org.zzu.schoolimsystem.entity.EventChatRecord;
 
 @Mapper
-public interface ChatMessageMapper extends BaseMapper<ChatMessage> {
-    // MyBatis-Plus 会自动实现 insert, selectList 等方法
+public interface EventChatRecordMapper extends BaseMapper<EventChatRecord> {
 }

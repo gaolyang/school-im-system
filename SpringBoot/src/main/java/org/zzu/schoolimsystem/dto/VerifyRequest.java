@@ -1,19 +1,16 @@
 package org.zzu.schoolimsystem.dto;
 
-/**
- * ClassName: VerifyRequest
- * Package: org.zzu.schoolimsystem.dto
- * Description:
- *
- * @Author gly
- * @Create 2026/3/10 19:39
- * @Version 1.0
- */
-
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.Data;
 
 @Data
 public class VerifyRequest {
-    private String eventnumber ;  // 事件id
-    private String code; // 验证码
+    /**
+     * 新字段是 order_id。
+     * 为了兼容旧前端，这里保留 eventnumber 别名。
+     */
+    @JsonAlias({"eventnumber", "orderId", "order_id"})
+    private Long orderId;
+
+    private Integer code;
 }

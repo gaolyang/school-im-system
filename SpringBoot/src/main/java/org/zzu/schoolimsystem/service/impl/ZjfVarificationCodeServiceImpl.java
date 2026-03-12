@@ -1,7 +1,9 @@
 package org.zzu.schoolimsystem.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.zzu.schoolimsystem.entity.ZjfVarificationCode;
 import org.zzu.schoolimsystem.mapper.ZjfVarificationCodeMapper;
 import org.zzu.schoolimsystem.service.ZjfVarificationCodeService;
@@ -18,28 +20,34 @@ public class ZjfVarificationCodeServiceImpl implements ZjfVarificationCodeServic
     }
 
     @Override
-    public Integer verifyCode(String eventnumber, String code) {
-        if (eventnumber == null || code == null) {
+    @Transactional(rollbackFor = Exception.class)
+    public Integer verifyCode(Long orderId, Integer code) {
+        if (orderId == null || code == null) {
             return 0;
         }
 
-        Long eventNumber;
-        Integer codeInt;
-        try {
-            eventNumber = Long.parseLong(eventnumber);
-            codeInt = Integer.parseInt(code);
-        } catch (NumberFormatException e) {
+        LambdaQueryWrapper<ZjfVarificationCode> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(ZjfVarificationCode::getOrderId, orderId)
+                .eq(ZjfVarificationCode::getCode, code)
+                .eq(ZjfVarificationCode::getValidity, ZjfVarificationCode.VALIDITY_PENDING)
+                .orderByDesc(ZjfVarificationCode::getId)
+                .last("limit 1");
+
+        // 如果这个接口只处理现场验证码，可以打开下面这行
+        // queryWrapper.eq(ZjfVarificationCode::getType, ZjfVarificationCode.TYPE_ONSITE);
+
+        ZjfVarificationCode record = mapper.selectOne(queryWrapper);
+        if (record == null) {
             return 0;
         }
 
-        QueryWrapper<ZjfVarificationCode> qw = new QueryWrapper<>();
-        // 使用数据库列名
-        qw.eq("event_number", eventNumber)
-                .eq("code", codeInt);
+        LambdaUpdateWrapper<ZjfVarificationCode> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(ZjfVarificationCode::getId, record.getId())
+                .eq(ZjfVarificationCode::getValidity, ZjfVarificationCode.VALIDITY_PENDING)
+                .set(ZjfVarificationCode::getValidity, ZjfVarificationCode.VALIDITY_VERIFIED)
+                .set(ZjfVarificationCode::getValitime, LocalDateTime.now());
 
-        // 如果你想检查是否已验证（valitime 非空 表示已验证），可以加条件：
-        // qw.isNull("valitime"); // 仅未验证的记录
-        Long count = mapper.selectCount(qw);
-        return (count != null && count > 0) ? 1 : 0;
+        int updated = mapper.update(null, updateWrapper);
+        return updated > 0 ? 1 : 0;
     }
 }

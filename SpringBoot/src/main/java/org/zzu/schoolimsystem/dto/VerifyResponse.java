@@ -12,9 +12,13 @@ package org.zzu.schoolimsystem.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 public class VerifyResponse {
+
+
+
     private Integer code; // 1 成功，0 失败
 }
