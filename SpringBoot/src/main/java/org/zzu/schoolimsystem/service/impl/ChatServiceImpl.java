@@ -33,6 +33,8 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public EventChatRecord sendMessage(Long orderId, ChatSendDTO dto) {
+
+        //从请求dto中获取一个实例 用于本地持久化
         EventChatRecord record = new EventChatRecord();
         record.setOrderId(orderId);
         record.setSenderId(dto.getSenderId());
@@ -45,7 +47,7 @@ public class ChatServiceImpl implements ChatService {
 
         chatRecordMapper.insert(record);
 
-        // 保持原来的 topic 不变
+        // 将消息推送给 订阅 该订单的用户
         messagingTemplate.convertAndSend("/topic/order/" + orderId, record);
 
         return record;
