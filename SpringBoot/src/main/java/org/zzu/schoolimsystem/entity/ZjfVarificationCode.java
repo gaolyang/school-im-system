@@ -13,11 +13,14 @@ import java.time.LocalDateTime;
 @TableName("zjf_varification_code")
 public class ZjfVarificationCode implements Serializable {
     private static final long serialVersionUID = 1L;
+//
 
-    public static final String VALIDITY_PENDING = "0";
-    public static final String VALIDITY_VERIFIED = "1";
-    public static final String VALIDITY_INVALID = "-1";
-    public static final String TYPE_ONSITE = "a";
+
+    //  暂时设为几个固定值  作为  状态码
+    public static final String VALIDITY_NotRequest = "0";   //还没验证
+    public static final String VALIDITY_AlreadyRequest = "1"; //已经验证
+    public static final String VALIDITY_Explire = "-1";  // 失效了
+    public static final String TYPE_ONSITE = "a";      // 验证的 类型     a本地
 
     @TableId(type = IdType.AUTO)
     private Long id;

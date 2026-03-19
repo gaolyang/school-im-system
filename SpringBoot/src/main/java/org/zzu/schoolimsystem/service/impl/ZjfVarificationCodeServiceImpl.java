@@ -69,6 +69,10 @@ import org.zzu.schoolimsystem.service.ZjfVarificationCodeService;
 
 import java.time.LocalDateTime;
 
+
+
+//返回固定的码 还没修改好
+
 @Service
 public class ZjfVarificationCodeServiceImpl implements ZjfVarificationCodeService {
 
@@ -81,6 +85,7 @@ public class ZjfVarificationCodeServiceImpl implements ZjfVarificationCodeServic
         this.workOrderMapper = workOrderMapper;
     }
 
+    // 完整性约束
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Integer verifyCode(Long orderId, Integer code) {
@@ -88,15 +93,17 @@ public class ZjfVarificationCodeServiceImpl implements ZjfVarificationCodeServic
             return 0;
         }
 
+
+        // 获取请求体
         LambdaQueryWrapper<ZjfVarificationCode> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ZjfVarificationCode::getOrderId, orderId)
                 .eq(ZjfVarificationCode::getCode, code)
-                .eq(ZjfVarificationCode::getValidity, ZjfVarificationCode.VALIDITY_PENDING)
+                .eq(ZjfVarificationCode::getValidity, ZjfVarificationCode.VALIDITY_NotRequest)
                 .orderByDesc(ZjfVarificationCode::getId)
                 .last("limit 1");
 
-        // 如果这个接口只处理现场验证码，可以打开下面这行
-        // queryWrapper.eq(ZjfVarificationCode::getType, ZjfVarificationCode.TYPE_ONSITE);
+        //
+
 
         ZjfVarificationCode record = mapper.selectOne(queryWrapper);
         if (record == null) {
@@ -104,18 +111,18 @@ public class ZjfVarificationCodeServiceImpl implements ZjfVarificationCodeServic
         }
 
         LocalDateTime now = LocalDateTime.now();
-
+// 更新验证码     对应
         LambdaUpdateWrapper<ZjfVarificationCode> codeUpdateWrapper = new LambdaUpdateWrapper<>();
         codeUpdateWrapper.eq(ZjfVarificationCode::getId, record.getId())
-                .eq(ZjfVarificationCode::getValidity, ZjfVarificationCode.VALIDITY_PENDING)
-                .set(ZjfVarificationCode::getValidity, ZjfVarificationCode.VALIDITY_VERIFIED)
+                .eq(ZjfVarificationCode::getValidity, ZjfVarificationCode.VALIDITY_NotRequest)
+                .set(ZjfVarificationCode::getValidity, ZjfVarificationCode.VALIDITY_AlreadyRequest)
                 .set(ZjfVarificationCode::getValitime, now);
 
         int codeUpdated = mapper.update(null, codeUpdateWrapper);
         if (codeUpdated <= 0) {
             return 0;
         }
-
+//同步修改 work_oder 表中的数据
         LambdaUpdateWrapper<WorkOrder> workOrderUpdateWrapper = new LambdaUpdateWrapper<>();
         workOrderUpdateWrapper.eq(WorkOrder::getId, orderId)
                 .eq(WorkOrder::getIsValid, 1)
