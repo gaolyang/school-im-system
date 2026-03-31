@@ -2,7 +2,7 @@
 target/
 .mvn/
 *.class
-*.jar
+#*.jar
 *.war
 *.ear
 *.log
