@@ -12,15 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * ClassName: LocalFileStorageServiceImpl
- * Package: org.zzu.schoolimsystem.service.impl
- * Description:
- *
- * @Author gly
- * @Create 2026/3/12 18:00
- * @Version 1.0
- */
 @Service
 @RequiredArgsConstructor
 public class LocalFileStorageServiceImpl implements FileStorageService {
@@ -30,9 +21,20 @@ public class LocalFileStorageServiceImpl implements FileStorageService {
     @Override
     public Map<String, Object> upload(MultipartFile file) throws IOException {
         String originalFilename = file.getOriginalFilename();
-        String fileName = UUID.randomUUID() + "_" + originalFilename;
+        String suffix = "";
+
+        if (originalFilename != null && originalFilename.contains(".")) {
+            suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+
+        String fileName = UUID.randomUUID().toString().replace("-", "") + suffix;
+
+//        // 保存到项目运行目录下的 uploads 文件夹
+//        String projectPath = System.getProperty("user.dir");
+//        File saveDir = new File(projectPath, properties.getDir());
 
         File saveDir = new File(properties.getDir());
+
         if (!saveDir.exists()) {
             saveDir.mkdirs();
         }
@@ -40,6 +42,7 @@ public class LocalFileStorageServiceImpl implements FileStorageService {
         File target = new File(saveDir, fileName);
         file.transferTo(target);
 
+        // 返回浏览器可访问的路径
         String url = properties.getAccessUrlPrefix() + fileName;
 
         Map<String, Object> res = new HashMap<>();

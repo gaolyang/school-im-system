@@ -1,86 +1,103 @@
 package org.zzu.schoolimsystem.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.zzu.schoolimsystem.dto.ChatSendDTO;
 import org.zzu.schoolimsystem.entity.EventChatRecord;
+import org.zzu.schoolimsystem.entity.SysUser;
 import org.zzu.schoolimsystem.mapper.EventChatRecordMapper;
+import org.zzu.schoolimsystem.mapper.SysUserMapper;
 import org.zzu.schoolimsystem.service.ChatService;
+import org.zzu.schoolimsystem.vo.ChatMessageVO;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
-/**
- * ClassName: ChatServiceImpl
- * Package: org.zzu.schoolimsystem.service.impl
- * Description:
- *
- * @Author gly
- * @Create 2026/3/12 17:47
- * @Version 1.0
- */
 @Service
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
 
-    private final EventChatRecordMapper chatRecordMapper;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final EventChatRecordMapper eventChatRecordMapper;
+    private final SysUserMapper sysUserMapper;  // 新增注入
+
+
+
+
 
     @Override
-    public EventChatRecord sendMessage(Long orderId, ChatSendDTO dto) {
+    public List<ChatMessageVO> getHistory(Long orderId) {
+        LambdaQueryWrapper<EventChatRecord> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(EventChatRecord::getOrderId, orderId)
+                .orderByAsc(EventChatRecord::getSendTime)
+                .orderByAsc(EventChatRecord::getId);
 
-        //从请求dto中获取一个实例 用于本地持久化
+        List<EventChatRecord> records = eventChatRecordMapper.selectList(queryWrapper);
+        return records.stream().map(this::toVO).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ChatMessageVO sendMessage(Long orderId, ChatSendDTO dto) {
         EventChatRecord record = new EventChatRecord();
         record.setOrderId(orderId);
         record.setSenderId(dto.getSenderId());
         record.setReceiverId(dto.getReceiverId());
+        record.setContentType(dto.getContentType());
         record.setContent(dto.getContent());
-        record.setContentType(dto.getContentType() == null ? 1 : dto.getContentType());
         record.setExtra(dto.getExtra());
-        record.setSendTime(LocalDateTime.now());
         record.setIsRead(0);
+        record.setSendTime(LocalDateTime.now());
 
-        chatRecordMapper.insert(record);
+        eventChatRecordMapper.insert(record);
 
-        // 将消息推送给 订阅 该订单的用户
-        messagingTemplate.convertAndSend("/topic/order/" + orderId, record);
-
-        return record;
+        return toVO(record);
     }
 
     @Override
-    public List<EventChatRecord> getHistory(Long orderId) {
-        return chatRecordMapper.selectList(
-                new QueryWrapper<EventChatRecord>()
-                        .eq("order_id", orderId)
-                        .orderByAsc("send_time")
-        );
+    @Transactional(rollbackFor = Exception.class)
+    public void markAsRead(Long orderId, String receiverId) {
+        LambdaUpdateWrapper<EventChatRecord> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(EventChatRecord::getOrderId, orderId)
+                .eq(EventChatRecord::getReceiverId, receiverId)
+                .eq(EventChatRecord::getIsRead, 0)
+                .set(EventChatRecord::getIsRead, 1);
+
+        eventChatRecordMapper.update(null, updateWrapper);
     }
 
-    @Override
-    public void markAsRead(Long orderId, String userId) {
-        EventChatRecord update = new EventChatRecord();
-        update.setIsRead(1);
+    private ChatMessageVO toVO(EventChatRecord record) {
+        ChatMessageVO vo = new ChatMessageVO();
+        BeanUtils.copyProperties(record, vo);
 
-        chatRecordMapper.update(update,
-                new UpdateWrapper<EventChatRecord>()
-                        .eq("order_id", orderId)
-                        .eq("receiver_id", userId)
-                        .eq("is_read", 0)
-        );
+        // 查询发送者信息
+        SysUser sender = sysUserMapper.selectById(record.getSenderId());
+        if (sender != null) {
+            // 优先用昵称，没有则用用户名
+            String name = sender.getNickname() != null && !sender.getNickname().isEmpty()
+                    ? sender.getNickname()
+                    : sender.getUsername();
+            vo.setSenderName(name);
+            vo.setSenderAvatar(sender.getAvatar());
+        } else {
+            vo.setSenderName("用户" + record.getSenderId());
+        }
 
-        // 不再伪装成聊天消息，单独发“已读通知”
-        Map<String, Object> receipt = new HashMap<>();
-        receipt.put("eventType", "READ_RECEIPT");
-        receipt.put("orderId", orderId);
-        receipt.put("userId", userId);
-        receipt.put("readTime", LocalDateTime.now());
+        // 查询接收者信息
+        SysUser receiver = sysUserMapper.selectById(record.getReceiverId());
+        if (receiver != null) {
+            String name = receiver.getNickname() != null && !receiver.getNickname().isEmpty()
+                    ? receiver.getNickname()
+                    : receiver.getUsername();
+            vo.setReceiverName(name);
+        } else {
+            vo.setReceiverName("用户" + record.getReceiverId());
+        }
 
-        messagingTemplate.convertAndSend("/topic/order/" + orderId + "/receipt", receipt);
+        return vo;
     }
 }

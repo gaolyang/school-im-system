@@ -1,31 +1,36 @@
 package org.zzu.schoolimsystem.config;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry; // 1. 导入 CorsRegistry
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
 import java.io.File;
 
 @Configuration
+@RequiredArgsConstructor
 public class WebMvcConfigurerImpl implements WebMvcConfigurer {
 
-    // === 1. 配置静态资源映射 (图片预览) ===
+    private final ChatUploadProperties properties;
+
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        String projectPath = System.getProperty("user.dir");
-        String uploadPath = "file:" + projectPath + File.separator + "uploads" + File.separator;
+        String location = properties.getDir();
+        if (!location.endsWith("/") && !location.endsWith(File.separator)) {
+            location = location + File.separator;
+        }
 
         registry.addResourceHandler("/images/**")
-                .addResourceLocations(uploadPath);
+                .addResourceLocations("file:" + location);
     }
 
-    // === 2. 新增：配置全局跨域 (解决上传和历史记录失败的问题) ===
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // 允许所有接口
-                .allowedOriginPatterns("*") // 允许所有来源 (Vue前端)
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // 允许的方法
-                .allowCredentials(true) // 允许携带 Cookie/凭证
+        registry.addMapping("/**")
+                .allowedOriginPatterns("*")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowCredentials(true)
                 .maxAge(3600);
     }
 }

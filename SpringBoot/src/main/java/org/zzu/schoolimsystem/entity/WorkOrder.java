@@ -6,37 +6,37 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Data
 @TableName("work_order")
-public class WorkOrder implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class WorkOrder {
 
-    public static final Integer STATUS_PENDING_GRAB = 0;
-    public static final Integer STATUS_DISPATCH_AUDIT_PENDING = 1;
-    public static final Integer STATUS_AUDIT_APPROVED = 2;
-    public static final Integer STATUS_REJECTED_PENDING_GRAB = 3;
-    public static final Integer STATUS_HANDLING = 4;
-    public static final Integer STATUS_HANDLE_FINISHED_PENDING_CONFIRM = 5;
-    public static final Integer STATUS_CONFIRM_APPROVED_PENDING_REVIEW = 6;
-    public static final Integer STATUS_REVIEW_APPROVED = 7;
-    public static final Integer STATUS_REVIEW_REJECTED_BACK_TO_HANDLING = 8;
-    public static final Integer STATUS_CLOSED = 9;
-    public static final Integer STATUS_ONSITE_VERIFYING = 10;
+    public static final String STATUS_WAIT_GRAB = "0";
+    public static final String STATUS_ASSIGN_AUDIT = "1";
+    public static final String STATUS_AUDIT_PASS = "2";
+    public static final String STATUS_REJECT_WAIT_GRAB = "3";
+    public static final String STATUS_HANDLING = "4";
+    public static final String STATUS_HANDLE_DONE_WAIT_CONFIRM = "5";
+    public static final String STATUS_WAIT_REVIEW = "6";
+    public static final String STATUS_REVIEW_PASS = "7";
+    public static final String STATUS_REVIEW_REJECT = "8";
+    public static final String STATUS_CLOSED = "9";
+    public static final String STATUS_VERIFYING = "10";
+
+
 
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    @TableField("event_id")
-    private Long eventId;
+    @TableField("event_no")
+    private String eventNo;
 
     @TableField("order_no")
     private String orderNo;
 
-    @TableField("title")
-    private String title;
+    @TableField("event_title")
+    private String eventTitle;
 
     @TableField("content")
     private String content;
@@ -45,7 +45,7 @@ public class WorkOrder implements Serializable {
     private Integer eventLevel;
 
     @TableField("create_user_id")
-    private Long createUserId;
+    private String createUserId;
 
     @TableField("create_user_ip")
     private String createUserIp;
@@ -57,13 +57,13 @@ public class WorkOrder implements Serializable {
     private Long grabConfigId;
 
     @TableField("current_status")
-    private Integer currentStatus;
+    private String currentStatus;
 
-    @TableField("grab_endtime")
-    private LocalDateTime grabEndtime;
+    @TableField("grab_end_time")
+    private LocalDateTime grabEndTime;
 
     @TableField("audit_id")
-    private Long auditId;
+    private String auditId;
 
     @TableField("audit_time")
     private LocalDateTime auditTime;
@@ -87,7 +87,7 @@ public class WorkOrder implements Serializable {
     private LocalDateTime verifyTime;
 
     @TableField("grab_user_id")
-    private Long grabUserId;
+    private String grabUserId;
 
     @TableField("grab_user_time")
     private LocalDateTime grabUserTime;
@@ -102,7 +102,7 @@ public class WorkOrder implements Serializable {
     private LocalDateTime handleTime;
 
     @TableField("approve_id")
-    private Long approveId;
+    private String approveId;
 
     @TableField("approve_note")
     private String approveNote;
@@ -110,9 +110,16 @@ public class WorkOrder implements Serializable {
     @TableField("approve_time")
     private LocalDateTime approveTime;
 
+    /**
+     * 如果你项目里没配 JSON TypeHandler，
+     * 先用 String 最稳，先保证查询不报错。
+     */
     @TableField("ext_info")
     private String extInfo;
 
     @TableField("is_valid")
     private Integer isValid;
+
+    @TableField("sure_time")
+    private LocalDateTime sureTime;
 }
